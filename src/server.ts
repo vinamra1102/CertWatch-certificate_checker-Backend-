@@ -13,6 +13,13 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to CertWatch API"
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.status(200).json({
     success: true,
