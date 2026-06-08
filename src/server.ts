@@ -9,6 +9,7 @@ import { prisma } from "./config/db";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.routes";
 import monitorRoutes from "./routes/monitor.routes";
+import { startCertCheckScheduler } from "./jobs/certChecker.job";
 
 const app = express();
 
@@ -44,8 +45,11 @@ const server = app.listen(env.PORT, () => {
   console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
 });
 
+const scheduler = env.NODE_ENV === "test" ? null : startCertCheckScheduler();
+
 async function shutdown() {
   console.log("Shutting down gracefully...");
+  scheduler?.stop();
   server.close(async () => {
     await prisma.$disconnect();
     process.exit(0);
