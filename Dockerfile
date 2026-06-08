@@ -35,9 +35,10 @@ COPY --from=builder /app/prisma ./prisma
 
 # Volume mount target for the SQLite file. The host should mount a persistent
 # disk here (e.g. Fly.io volume, Railway volume) and set
-# DATABASE_URL="file:/data/prod.db".
+# DATABASE_URL="file:/data/prod.db". The volume itself is declared in the host
+# config (fly.toml or Railway UI) — we do not emit a Dockerfile VOLUME because
+# Railway rejects that directive.
 RUN mkdir -p /data
-VOLUME ["/data"]
 
 EXPOSE 5000
 
