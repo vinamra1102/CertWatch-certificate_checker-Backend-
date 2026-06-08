@@ -11,6 +11,8 @@ import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.routes";
 import monitorRoutes from "./routes/monitor.routes";
 import { startCertCheckScheduler } from "./jobs/certChecker.job";
+import swaggerUi from "swagger-ui-express";
+import { openApiSpec } from "./docs/openapi";
 
 const app = express();
 
@@ -50,6 +52,9 @@ app.get("/health", async (_req, res) => {
     });
   }
 });
+
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
+app.get("/api/docs.json", (_req, res) => res.json(openApiSpec));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/monitors", monitorRoutes);
