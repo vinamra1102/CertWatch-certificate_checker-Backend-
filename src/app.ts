@@ -15,6 +15,10 @@ import { openApiSpec } from "./docs/openapi";
 export function createApp(): Express {
   const app = express();
 
+  // Trust the first proxy hop (Fly.io / Railway / Vercel edge) so that
+  // express-rate-limit and pino-http see the real client IP from X-Forwarded-For.
+  app.set("trust proxy", 1);
+
   app.use(helmet());
   app.use(
     cors({
