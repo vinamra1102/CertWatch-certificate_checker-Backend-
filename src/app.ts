@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import { prisma } from "./config/db";
+import { env } from "./config/env";
 import { logger } from "./config/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.routes";
@@ -15,7 +16,12 @@ export function createApp(): Express {
   const app = express();
 
   app.use(helmet());
-  app.use(cors());
+  app.use(
+    cors({
+      origin: env.CORS_ORIGIN,
+      credentials: true,
+    })
+  );
   app.use(pinoHttp({ logger }));
   app.use(express.json());
 
