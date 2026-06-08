@@ -2,3 +2,9 @@ node_modules
 dist
 .env
 /src/generated/prisma
+
+# SQLite
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm

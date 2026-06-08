@@ -1,34 +1,58 @@
+import "./config/env"; // fail-fast env validation
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
-
-dotenv.config();
+import rateLimit from "express-rate-limit";
+import { env } from "./config/env";
+import { prisma } from "./config/db";
+import { errorHandler } from "./middleware/errorHandler";
+import authRoutes from "./routes/auth.routes";
+import monitorRoutes from "./routes/monitor.routes";
 
 const app = express();
 
-app.use(cors());
 app.use(helmet());
-app.use(morgan("dev"));
+app.use(cors());
+app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
 
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: "Too many requests, please try again later" },
+  })
+);
+
 app.get("/", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome to CertWatch API"
-  });
+  res.json({ success: true, message: "Welcome to CertWatch API" });
 });
 
 app.get("/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "CertWatch backend running"
+  res.json({ success: true, message: "CertWatch backend running" });
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/monitors", monitorRoutes);
+
+app.use(errorHandler);
+
+const server = app.listen(env.PORT, () => {
+  console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+});
+
+async function shutdown() {
+  console.log("Shutting down gracefully...");
+  server.close(async () => {
+    await prisma.$disconnect();
+    process.exit(0);
   });
-});
+}
 
-const PORT = process.env.PORT || 5000;
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export default app;
