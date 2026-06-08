@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { logger } from "../config/logger";
 
 export function errorHandler(
   err: unknown,
@@ -29,10 +30,11 @@ export function errorHandler(
   }
 
   if (err instanceof Error) {
-    console.error(err.message);
+    logger.error({ err }, "unhandled error");
     res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 
+  logger.error({ err }, "unknown error");
   res.status(500).json({ success: false, message: "Internal server error" });
 }

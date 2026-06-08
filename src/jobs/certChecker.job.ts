@@ -1,6 +1,7 @@
 import cron, { ScheduledTask } from "node-cron";
 import { prisma } from "../config/db";
 import { getCertInfo } from "../services/cert.service";
+import { logger } from "../config/logger";
 
 // Run every day at 02:00 server time
 const SCHEDULE = "0 2 * * *";
@@ -32,14 +33,15 @@ export function startCertCheckScheduler(): ScheduledTask {
     const start = Date.now();
     try {
       const result = await runCertCheckOnce();
-      console.log(
-        `[cert-checker] completed in ${Date.now() - start}ms — checked=${result.checked} updated=${result.updated}`
+      logger.info(
+        { durationMs: Date.now() - start, ...result },
+        "cert-checker completed"
       );
     } catch (err) {
-      console.error("[cert-checker] failed:", err);
+      logger.error({ err }, "cert-checker failed");
     }
   });
 
-  console.log(`[cert-checker] scheduled with cron "${SCHEDULE}"`);
+  logger.info({ schedule: SCHEDULE }, "cert-checker scheduled");
   return task;
 }

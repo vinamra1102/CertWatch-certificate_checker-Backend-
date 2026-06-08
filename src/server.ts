@@ -2,10 +2,11 @@ import "./config/env"; // fail-fast env validation
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
+import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import { prisma } from "./config/db";
+import { logger } from "./config/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.routes";
 import monitorRoutes from "./routes/monitor.routes";
@@ -15,7 +16,7 @@ const app = express();
 
 app.use(helmet());
 app.use(cors());
-app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(pinoHttp({ logger }));
 app.use(express.json());
 
 app.use(
@@ -56,13 +57,13 @@ app.use("/api/monitors", monitorRoutes);
 app.use(errorHandler);
 
 const server = app.listen(env.PORT, () => {
-  console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+  logger.info(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
 });
 
 const scheduler = env.NODE_ENV === "test" ? null : startCertCheckScheduler();
 
 async function shutdown() {
-  console.log("Shutting down gracefully...");
+  logger.info("Shutting down gracefully...");
   scheduler?.stop();
   server.close(async () => {
     await prisma.$disconnect();
