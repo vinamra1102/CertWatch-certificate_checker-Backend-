@@ -32,8 +32,22 @@ app.get("/", (_req, res) => {
   res.json({ success: true, message: "Welcome to CertWatch API" });
 });
 
-app.get("/health", (_req, res) => {
-  res.json({ success: true, message: "CertWatch backend running" });
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      success: true,
+      status: "healthy",
+      uptime: process.uptime(),
+      db: "ok",
+    });
+  } catch {
+    res.status(503).json({
+      success: false,
+      status: "degraded",
+      db: "unreachable",
+    });
+  }
 });
 
 app.use("/api/auth", authRoutes);
