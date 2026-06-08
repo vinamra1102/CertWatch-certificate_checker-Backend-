@@ -1,11 +1,39 @@
 import { prisma } from "../config/db";
 import { getCertInfo } from "./cert.service";
 
-export async function listMonitors(userId: string) {
-  return prisma.monitor.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
+export interface PageOptions {
+  page: number;
+  limit: number;
+}
+
+export interface PageMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function listMonitors(userId: string, { page, limit }: PageOptions) {
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    prisma.monitor.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.monitor.count({ where: { userId } }),
+  ]);
+
+  const meta: PageMeta = {
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+
+  return { items, meta };
 }
 
 export async function createMonitor(userId: string, domain: string) {

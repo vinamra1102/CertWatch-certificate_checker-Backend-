@@ -1,11 +1,21 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../types";
 import * as monitorService from "../services/monitor.service";
+import { paginationSchema } from "../validators/pagination.validator";
 
 export async function list(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
-    const monitors = await monitorService.listMonitors(req.user!.userId);
-    res.json({ success: true, data: monitors });
+    const parsed = paginationSchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters",
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+    const { items, meta } = await monitorService.listMonitors(req.user!.userId, parsed.data);
+    res.json({ success: true, data: items, meta });
   } catch (err) {
     next(err);
   }
